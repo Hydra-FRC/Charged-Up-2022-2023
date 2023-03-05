@@ -1,7 +1,7 @@
 package frc.robot.subsystems;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -12,79 +12,84 @@ import frc.robot.Constants;
 
 public class ArmSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
-  VictorSPX armMotor;
-  public boolean up,down;
-  private int i = 0;
+  //VictorSPX armMotor = new VictorSPX(Constants.MOTOR_ARM);
+  public boolean up,down,aM;
+  private CANSparkMax sp = new CANSparkMax(10,MotorType.kBrushless);
+  private RelativeEncoder spEncoder = sp.getEncoder();
+
 
 
   Compressor comp = new Compressor(1, PneumaticsModuleType.REVPH);
-  Solenoid outP = new Solenoid(PneumaticsModuleType.REVPH,Constants.PISTON_OUT);
-  Solenoid inP = new Solenoid(PneumaticsModuleType.REVPH, Constants.PISTON_IN); 
+  Solenoid outP = new Solenoid(PneumaticsModuleType.REVPH,Constants.PISTON1_OUT);
+  Solenoid inP = new Solenoid(PneumaticsModuleType.REVPH, Constants.PISTON1_IN); 
+  Solenoid inP2 = new Solenoid(PneumaticsModuleType.REVPH, Constants.PISTON2_IN);
+  Solenoid outP2 = new Solenoid(PneumaticsModuleType.REVPH, Constants.PISTON2_OUT);
 
   
   public ArmSubsystem() {
-    armMotor = new VictorSPX(Constants.MOTOR_ARM);
+    sp.setInverted(false);
   }
 
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     armNeutral();
-    SmartDashboard.putNumber("Arm Control", i);
+    SmartDashboard.putNumber("Encoder Output",spEncoder.getPosition());
   }
-
+ 
   @Override
   public void simulationPeriodic() {
     // This method will be called once per scheduler run during simulation
   }
 
-  public void armUp(double power){
-    if(i < Constants.kMaxExtension){ 
-      armMotor.set(ControlMode.PercentOutput, power);
-      SmartDashboard.putString("Arm Direction", "Up");
-      pneuUP();
-      i++;
-    } else {
-      SmartDashboard.putString("Arm Direction", "Up Locked");
-      armMotor.set(ControlMode.PercentOutput, 0);
-      pneuNeutral();
-    }
+  public void armUp(){
+    SmartDashboard.putString("Arm Direction", "Up");
+    pneuUP();
   }
 
-  public void armDown(double power){
-    if(i > 0){ 
-      power = -power;
-      armMotor.set(ControlMode.PercentOutput, power);
-      SmartDashboard.putString("Arm Direction", "Down");
-      i--;
-      pneuDown();
-    } else {
-      SmartDashboard.putString("Arm Direction", "Down Locked");
-      armMotor.set(ControlMode.PercentOutput, 0);
-      pneuNeutral();
-    }
+  public void armDown(){
+    SmartDashboard.putString("Arm Direction", "Down");
+    pneuDown();
   }
 
   private void armNeutral(){
     if(up == false &&  down == false){ 
     SmartDashboard.putString("Arm Direction", "Neutral");
-    armMotor.set(ControlMode.PercentOutput, 0);
+    pneuNeutral();
     }
   }
 
   private void pneuUP(){
     inP.set(true);
     outP.set(false);
+    inP2.set(true);
+    outP2.set(false);
     SmartDashboard.putString("Pneumatics", "UP");
   }
   private void pneuDown(){
     inP.set(false);
     outP.set(true);
+    inP2.set(false);
+    outP2.set(true);
     SmartDashboard.putString("Pneumatics", "DOWN");
   }
   private void pneuNeutral(){
-    inP.set(false);
-    outP.set(false);
+      inP.set(false);
+      outP.set(false);
+      inP2.set(false);
+      outP2.set(false);
     SmartDashboard.putString("Pneumatics", "NEUTRAL");
+  }
+
+  public void motorOn(double spd){
+    sp.set(spd);
+    SmartDashboard.putString("Motor Auxiliar", "Ativado");
+    aM = true;
+  }
+
+  public void motorOff(){
+    sp.set(0);
+    SmartDashboard.putString("Motor Auxiliar", "Desativado");
+    aM = false;
   }
 }

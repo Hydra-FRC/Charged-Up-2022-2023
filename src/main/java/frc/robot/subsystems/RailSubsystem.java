@@ -28,7 +28,7 @@ public class RailSubsystem extends SubsystemBase {
 
     public void manageRailR(double tR){
         if(tR != 0){ 
-            rail.set(ControlMode.PercentOutput, tR);
+            rail.set(ControlMode.PercentOutput, tR * Constants.kSlowSpd);
             SmartDashboard.putBoolean("Trilho", true);
         }
         else{
@@ -39,7 +39,7 @@ public class RailSubsystem extends SubsystemBase {
 
     public void manageRailL(double tL){
         if(tL != 0){
-          rail.set(ControlMode.PercentOutput, tL);
+          rail.set(ControlMode.PercentOutput, -tL * Constants.kSlowSpd);
             SmartDashboard.putBoolean("Trilho", true);
         }
         else{
@@ -47,6 +47,10 @@ public class RailSubsystem extends SubsystemBase {
             SmartDashboard.putBoolean("Trilho", false);
         }
       }
+
+    public void morreEssaDisgrama(){
+      rail.set(ControlMode.PercentOutput, 0);
+    }
 
     }
 

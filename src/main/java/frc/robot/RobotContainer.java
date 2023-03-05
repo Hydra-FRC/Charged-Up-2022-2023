@@ -7,6 +7,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -17,6 +18,7 @@ import frc.robot.subsystems.ClawSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.RailSubsystem;
 import frc.robot.utils.Driver;
+import frc.robot.utils.SystemDriver;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -33,7 +35,7 @@ public class RobotContainer {
   private static ArmSubsystem arm = new ArmSubsystem();
   SendableChooser<Command> m_chooser = new SendableChooser<>();
   JoystickButton lb = new JoystickButton(driverController, 5);
-  double spd = 1;
+  double spd = 0.75;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -58,28 +60,61 @@ public class RobotContainer {
     //     robotDrive.setPower(powers);
     //   }, robotDrive), false);
 
-    new JoystickButton(systemsController, Constants.BUTTON_Y)
-      .onTrue((Commands.runOnce(() -> claw.clawActivate())))
-      .onFalse(Commands.runOnce(() -> claw.clawDesactivate()));
+    new JoystickButton(systemsController, Constants.SYSTEM_CONTROLLER_TRIGGER_BUTTON)
+      .onTrue(Commands.runOnce(() -> {
+        SmartDashboard.putBoolean("Claw Activated", true);
+        claw.clawActivate();
+      }))
+      .onFalse(Commands.runOnce(() -> {
+        SmartDashboard.putBoolean("Claw Activated", false);
+        claw.clawDesactivate();
+      }));
     
-    new JoystickButton(systemsController, Constants.BUTTON_B)
-      .toggleOnTrue(Commands.run(() -> {
-        rail.manageRailL(systemsController.getRawAxis(Constants.RT));
-        rail.manageRailR(systemsController.getRawAxis(Constants.LT));
+    new JoystickButton(systemsController, Constants.SYSTEM_CONTROLLER_SIDE_BUTTON)
+      .toggleOnTrue(Commands.run(() -> 
+        rail.manageRailL(systemsController.getRawAxis(Constants.LT))))
+      .toggleOnFalse(Commands.run(() ->
+        rail.morreEssaDisgrama()));
+      
+
+    new JoystickButton(systemsController, 1)
+      .toggleOnTrue(Commands.run(() -> 
+        rail.manageRailR(systemsController.getRawAxis(Constants.SYSTEM_CONTROLLER_Y_AXIS))))
+      .toggleOnFalse(Commands.run(() ->
+        rail.morreEssaDisgrama()));
+
+    new JoystickButton(systemsController, 9)
+      .whileTrue(Commands.run(() ->{
+        arm.armUp(); 
+        arm.up = true;
+        SmartDashboard.putString("Elevacao Pneumatico", "Sim");
+      }))
+      .onFalse(Commands.run(() -> {
+        arm.up = false;
+        SmartDashboard.putString("Elevacao Pneumatico", "Nao");
+      }));
+    new JoystickButton(systemsController, 10)
+      .whileTrue(Commands.run(() -> {
+        arm.armDown();
+        arm.down = false;
+        SmartDashboard.putString("Descida Pneumatico", "Sim");
+        }
+      ))
+      .onFalse(Commands.run(() -> {
+        arm.down = false;
+        SmartDashboard.putString("Descida Pneumatico", "Nao");
       }));
 
-    new JoystickButton(systemsController, Constants.RB)
-      .whileTrue(Commands.run(() ->{
-        arm.armUp(spd); 
-        arm.up = true;
-      }))
-      .onFalse(Commands.run(() -> arm.up = false));
-    new JoystickButton(systemsController, Constants.LB)
-      .whileTrue(Commands.run(() -> {
-        arm.armDown(spd);
-        arm.down = false;
-      }))
-      .onFalse(Commands.run(() -> arm.down = false));
+    new JoystickButton(systemsController, 11)
+      .onTrue(Commands.runOnce(() -> arm.motorOn(spd)))
+      .onFalse(Commands.runOnce(() -> arm.motorOff()));
+
+     new JoystickButton(systemsController, Constants.BUTTON_A)
+       .onTrue(Commands.runOnce(() -> {
+        spd = SystemDriver.auxiliarMotorSpdAdjust(spd);
+        SmartDashboard.putNumber("Auxiliar Motor Speed", spd);
+       }
+       ));
     
     
     // new JoystickButton(systemsController, Constants.BUTTON_B)
